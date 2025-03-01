@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace AgentFramework
 {
@@ -25,7 +26,6 @@ namespace AgentFramework
 
             //Add tool: check weather
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
-            tool.Parameters.Add(new ToolInputParameter("location", "The name of the location you want to check the temperature of, i.e. 'Seattle, WA' or 'Atlanta, GA'."));
             a.Tools.Add(tool);
 
 
@@ -44,26 +44,81 @@ namespace AgentFramework
                     Console.Write("> ");
                     input = Console.ReadLine();
                 }
-
-                //Append message
                 a.Messages.Add(new Message(Role.user, input));
 
                 //Prompt
+                Prompt:
                 Console.WriteLine();
                 Console.Write("Thinking...");
                 Message response = await a.PromptAsync();
-
-                //Write
+                a.Messages.Add(response); //Add response to message array
                 Console.WriteLine();
                 Console.WriteLine();
-                Console.WriteLine(response.Content);
 
-                //Add to message array
-                a.Messages.Add(response);
+                //Write content if there is some
+                if (response.Content != null)
+                {
+                    if (response.Content != "")
+                    {
+                        Console.WriteLine(response.Content);
+                    }
+                }
+
+                //Handle tool calls
+                if (response.ToolCalls.Length > 0)
+                {
+                    foreach (ToolCall tc in response.ToolCalls)
+                    {
+                        Console.Write("Calling tool '" + tc.ToolName + "'... ");
+                        string tool_call_response_payload = "";
+
+                        //Call to the tool and save the response from that tool
+                        if (tc.ToolName == "check_temperature")
+                        {
+                            tool_call_response_payload = await CheckTemperature(27.17f, -82.46f);
+                        }
+
+                        //Append tool response to messages
+                        Message ToolResponseMessage = new Message();
+                        ToolResponseMessage.Role = Role.tool;
+                        ToolResponseMessage.ToolCallID = tc.ID;
+                        ToolResponseMessage.Content = tool_call_response_payload;
+                        a.Messages.Add(ToolResponseMessage);
+
+                        //Confirm completion of tool call
+                        Console.WriteLine("Complete!");
+                    }
+
+                    //Prompt right away (do not ask for user for input yet)
+                    goto Prompt;
+                }
+                
+
+                
             }
             
 
 
         }
+
+
+        //////// TOOLS /////////
+        
+        public static async Task<string> CheckTemperature(float latitude, float longitude)
+        {
+            string url = "https://api.open-meteo.com/v1/forecast?latitude=" + latitude.ToString() + "&longitude=" + longitude.ToString() + "&current=temperature_2m&temperature_unit=fahrenheit";
+            HttpClient hc = new HttpClient();
+            HttpResponseMessage resp = await hc.GetAsync(url);
+            string content = await resp.Content.ReadAsStringAsync();
+            if (resp.StatusCode != HttpStatusCode.OK)
+            {
+                throw new Exception("Request to open-meteo.com to get temperature return code '" + resp.StatusCode.ToString() + "'. Msg: " + content);
+            }
+            return content; //Just return the entire body
+        }
+
+
+
+
     }
 }
