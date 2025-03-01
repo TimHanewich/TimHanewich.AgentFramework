@@ -65,7 +65,18 @@ namespace AgentFramework
             }
 
             //Get tool calls
-            //Will do this later
+            JToken? tool_calls = message.SelectToken("tool_calls");
+            if (tool_calls != null)
+            {
+                List<ToolCall> ToolCallsMadeByModel = new List<ToolCall>();
+                JArray tool_calls_ja = (JArray)tool_calls;
+                foreach (JObject tool_call_jo in tool_calls_ja)
+                {
+                    ToolCall tc = ToolCall.Parse(tool_call_jo);
+                    ToolCallsMadeByModel.Add(tc);
+                }
+                ToReturn.ToolCalls = ToolCallsMadeByModel.ToArray();
+            }
 
             return ToReturn;
         }

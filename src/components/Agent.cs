@@ -42,7 +42,15 @@ namespace AgentFramework
             body.Add("messages", messages);
 
             //Add tools
-            //will do this later
+            if (Tools.Count > 0)
+            {
+                JArray tools = new JArray();
+                foreach (Tool tool in Tools)
+                {
+                    tools.Add(tool.ToJSON());
+                }
+                body.Add("tools", tools);
+            }
 
             //Make API call
             req.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/json"); //add body to request body
