@@ -28,6 +28,11 @@ namespace AgentFramework
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
             a.Tools.Add(tool);
 
+            //Add tool: save text file
+            Tool tool_savetxtfile = new Tool("save_txt_file", "Save a text file to the user's computer.");
+            tool_savetxtfile.Parameters.Add(new ToolInputParameter("file_name", "The name of the file, WITHOUT the '.txt' file extension at the end."));
+            tool_savetxtfile.Parameters.Add(new ToolInputParameter("file_content", "The content of the .txt file (raw text)."));
+            a.Tools.Add(tool_savetxtfile);
 
             //Add welcoming message
             string opening_msg = "Hello! I'm here to help. What can I do for you?";
@@ -77,6 +82,30 @@ namespace AgentFramework
                         {
                             tool_call_response_payload = await CheckTemperature(27.17f, -82.46f);
                         }
+                        else if (tc.ToolName == "save_txt_file")
+                        {
+                            //Get file name
+                            string file_name = "dummy.txt";
+                            JProperty? prop_file_name = tc.Arguments.Property("file_name");
+                            if (prop_file_name != null)
+                            {
+                                file_name = prop_file_name.Value.ToString() + ".txt";
+                            }
+
+                            //Get file content
+                            string file_content = "(dummy content)";
+                            JProperty? prop_file_content = tc.Arguments.Property("file_content");
+                            if (prop_file_content != null)
+                            {
+                                file_content = prop_file_content.Value.ToString();
+                            }
+
+                            //Save file
+                            SaveFile(file_name, file_content);
+
+                            //Set success message
+                            tool_call_response_payload = "File successfully saved.";
+                        }
 
                         //Append tool response to messages
                         Message ToolResponseMessage = new Message();
@@ -115,6 +144,12 @@ namespace AgentFramework
                 throw new Exception("Request to open-meteo.com to get temperature return code '" + resp.StatusCode.ToString() + "'. Msg: " + content);
             }
             return content; //Just return the entire body
+        }
+
+        public static void SaveFile(string file_name, string file_content)
+        {
+            string full_path = System.IO.Path.Combine(Environment.CurrentDirectory, file_name);
+            System.IO.File.WriteAllText(file_name, file_content);
         }
 
 
