@@ -92,7 +92,33 @@ namespace AgentFramework
             ToReturn.Add("content", Content);
 
             //Add tool calls
-            //Will do this later
+            if (ToolCalls.Length > 0)
+            {
+                JArray tool_calls = new JArray();
+                ToReturn.Add("tool_calls", tool_calls);
+                foreach (ToolCall tc in ToolCalls)
+                {
+                    JObject tool_call = new JObject();
+
+                    //Add type and ID
+                    tool_call.Add("type", "function");
+                    tool_call.Add("id", tc.ID);
+
+                    //function
+                    JObject function = new JObject();
+                    tool_call.Add("function", function);
+                    function.Add("name", tc.ToolName);
+                    function.Add("arguments", tc.Arguments.ToString()); //add arguments as JSON-encoded string (this is how it is supposed to be, per API specification)
+
+                    tool_calls.Add(tool_call);
+                }
+            }
+
+            //Add tool call ID?
+            if (ToolCallID != null)
+            {
+                ToReturn.Add("tool_call_id", ToolCallID);
+            }
 
             return ToReturn;
         }
