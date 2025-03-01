@@ -1,4 +1,6 @@
 using System;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace AgentFramework
 {
@@ -17,5 +19,72 @@ namespace AgentFramework
         {
             ToolCalls = new ToolCall[]{};
         }
+
+        public Message(Role role, string content)
+        {
+            Role = role;
+            Content = content;
+            ToolCalls = new ToolCall[]{};
+        }
+
+        public static Message Parse(JObject message)
+        {
+            Message ToReturn = new Message();
+
+            //get role
+            JProperty? role = message.Property("role");
+            if (role != null)
+            {
+                string rolestr = role.Value.ToString();
+                if (rolestr == "system")
+                {
+                    ToReturn.Role = Role.system;
+                }
+                else if (rolestr == "user")
+                {
+                    ToReturn.Role = Role.user;
+                }
+                else if (rolestr == "assistant")
+                {
+                    ToReturn.Role = Role.assistant;
+                }
+                else if (rolestr == "tool")
+                {
+                    ToReturn.Role = Role.tool;
+                }
+            }
+
+            //Get content
+            JProperty? content = message.Property("content");
+            if (content != null)
+            {
+                if (content.Value.Type != JTokenType.Null)
+                {
+                    ToReturn.Content = content.Value.ToString();
+                }
+            }
+
+            //Get tool calls
+            //Will do this later
+
+            return ToReturn;
+        }
+
+        public JObject ToJSON()
+        {
+            JObject ToReturn = new JObject();
+
+            //Add role
+            ToReturn.Add("role", Role.ToString());
+
+            //add content
+            ToReturn.Add("content", Content);
+
+            //Add tool calls
+            //Will do this later
+
+            return ToReturn;
+        }
+
     }
 }
