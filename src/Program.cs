@@ -34,6 +34,11 @@ namespace AgentFramework
             tool_savetxtfile.Parameters.Add(new ToolInputParameter("file_content", "The content of the .txt file (raw text)."));
             a.Tools.Add(tool_savetxtfile);
 
+            //Add tool: read text file
+            Tool tool_readtxtfile = new Tool("read_txt_file", "Read the contents of a .txt file from the user's computer");
+            tool_readtxtfile.Parameters.Add(new ToolInputParameter("file_path", "The path to the file on the computer, for example 'C:\\Users\\timh\\Downloads\\notes.txt' or '.\\notes.txt' or 'notes.txt'"));
+            a.Tools.Add(tool_readtxtfile);
+
             //Add welcoming message
             string opening_msg = "Hello! I'm here to help. What can I do for you?";
             a.Messages.Add(new Message(Role.assistant, opening_msg));
@@ -105,6 +110,30 @@ namespace AgentFramework
 
                             //Set success message
                             tool_call_response_payload = "File successfully saved.";
+                        }
+                        else if (tc.ToolName == "read_txt_file")
+                        {
+                            //Get file path
+                            string file_path = "?";
+                            JProperty? prop_file_path = tc.Arguments.Property("file_path");
+                            if (prop_file_path != null)
+                            {
+                                file_path = prop_file_path.Value.ToString();
+                            }
+
+                            //Does file exist?
+                            if (System.IO.File.Exists(file_path))
+                            {
+                                //Read the file content
+                                string content = System.IO.File.ReadAllText(file_path);
+
+                                //Return it
+                                tool_call_response_payload = content;
+                            }
+                            else
+                            {
+                                tool_call_response_payload = "File with path '" + file_path + "' does not exist!";
+                            } 
                         }
 
                         //Append tool response to messages
