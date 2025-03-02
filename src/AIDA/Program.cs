@@ -186,6 +186,13 @@ namespace AIDA
             Tool tool_checkcurrenttime = new Tool("check_current_time", "Check the current date and time right now.");
             a.Tools.Add(tool_checkcurrenttime);
 
+            //Add tool: send email
+            Tool tool_sendemail = new Tool("send_email", "Send an email.");
+            tool_sendemail.Parameters.Add(new ToolInputParameter("to", "The email the email is to be sent to. i.e. 'kris.henson@gmail.com'"));
+            tool_sendemail.Parameters.Add(new ToolInputParameter("subject", "The subject line of the email."));
+            tool_sendemail.Parameters.Add(new ToolInputParameter("body", "The body (content) of the email."));
+            a.Tools.Add(tool_sendemail);
+
             //Add welcoming message
             string opening_msg = "Hi, I'm AIDA, and I'm here to help! What can I do for you?";
             a.Messages.Add(new Message(Role.assistant, opening_msg));
@@ -331,6 +338,50 @@ namespace AIDA
                         {
                             tool_call_response_payload = "The current date and time is " + DateTime.Now.ToString();
                         }
+                        else if (tc.ToolName == "send_email")
+                        {
+
+                            if (mgh != null)
+                            {
+                                //Get to line
+                                string? to = null;
+                                JProperty? prop_to = tc.Arguments.Property("to");
+                                if (prop_to != null)
+                                {
+                                    to = prop_to.Value.ToString();
+                                }
+
+                                //Get subject
+                                string? subject = null;
+                                JProperty? prop_subject = tc.Arguments.Property("subject");
+                                if (prop_subject != null)
+                                {
+                                    subject = prop_subject.Value.ToString();
+                                }
+
+                                //Get body
+                                string? body = null;
+                                JProperty? prop_body = tc.Arguments.Property("body");
+                                if (prop_body != null)
+                                {
+                                    body = prop_body.Value.ToString();
+                                }
+
+                                //If we have all the properties, call!
+                                if (to != null && subject != null && body != null)
+                                {
+                                    await SendEmail(mgh, to, subject, body, MicrosoftGraphHelperPath);
+                                }
+                                else
+                                {
+                                    tool_call_response_payload = "Due to being unable to collect all three necessary input parameters (to, subject, body), unable to initiate the sending of the email.";
+                                }
+                            }
+                            else
+                            {
+                                tool_call_response_payload = "Unable to send email because we are not logged in to Microsoft Outlook!";
+                            }
+                        }
 
                         //Append tool response to messages
                         Message ToolResponseMessage = new Message();
@@ -377,7 +428,7 @@ namespace AIDA
             System.IO.File.WriteAllText(file_name, file_content);
         }
 
-        public static async Task<string> ScheduleReminder(MicrosoftGraphHelper mgh, string reminder_name, DateTime time, string MicrosoftGraphHelperLocalFilePath)
+        public static async Task RefreshMicrosoftGraphAccessTokensIfExpiredAsync(MicrosoftGraphHelper mgh, string MicrosoftGraphHelperLocalFilePath)
         {
             //Check if credentials need to be refreshed
             if (mgh.AccessTokenHasExpired())
@@ -391,11 +442,22 @@ namespace AIDA
                 catch (Exception ex)
                 {
                     AnsiConsole.MarkupLine("[red]Refreshing of graph token failed: " + ex.Message + "[/]");
-                    return "Unable to set reminder due to refreshing of Microsoft Graph Access tokens failing. Error message: " + ex.Message;
                 }
 
                 //Save updated credentials to file
                 System.IO.File.WriteAllText(MicrosoftGraphHelperLocalFilePath, JsonConvert.SerializeObject(mgh, Formatting.Indented));
+            }
+        }
+
+        public static async Task<string> ScheduleReminder(MicrosoftGraphHelper mgh, string reminder_name, DateTime time, string MicrosoftGraphHelperLocalFilePath)
+        {
+            try
+            {
+                await RefreshMicrosoftGraphAccessTokensIfExpiredAsync(mgh, MicrosoftGraphHelperLocalFilePath);
+            }
+            catch (Exception ex)
+            {
+                return "Unable to set reminder due to refreshing of Microsoft Graph Access tokens failing. Error message: " + ex.Message;
             }
 
             //Set subject
@@ -422,6 +484,38 @@ namespace AIDA
             return "Reminder successfully scheduled.";
         }
 
+
+        public static async Task<string> SendEmail(MicrosoftGraphHelper mgh, string to, string subject, string body, string MicrosoftGraphHelperLocalFilePath)
+        {
+            try
+            {
+                await RefreshMicrosoftGraphAccessTokensIfExpiredAsync(mgh, MicrosoftGraphHelperLocalFilePath);
+            }
+            catch (Exception ex)
+            {
+                return "Unable to set send email due to refreshing of Microsoft Graph Access tokens failing. Error message: " + ex.Message;
+            }
+
+            //Create email
+            OutlookEmailMessage email = new OutlookEmailMessage();
+            email.ToRecipients.Add(to);
+            email.Subject = subject;
+            email.Content = body;
+            email.ContentType = OutlookEmailMessageContentType.Text;
+
+            //Send the email
+            try
+            {
+                await mgh.SendOutlookEmailMessageAsync(email);
+            }
+            catch (Exception ex)
+            {
+                return "Sending outlook email failed! Error message: " + ex.Message;
+            }
+
+
+            return "Email sent successfully.";
+        }
 
 
 
