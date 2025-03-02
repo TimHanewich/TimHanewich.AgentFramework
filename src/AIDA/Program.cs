@@ -604,7 +604,7 @@ namespace AIDA
                 return "Attempt to schedule reminder failed. There was an issue when creating it. Error message: " + ex.Message;
             }
             
-            return "Reminder successfully scheduled.";
+            return "Reminder '" + reminder_name + "' successfully scheduled for '" + time.ToString() + "' EST ('" + time.ToString() + "' UTC). When confirming this with the user, explicitly confirm the reminder name and date/time it was scheduled for."; 
         }
 
 
