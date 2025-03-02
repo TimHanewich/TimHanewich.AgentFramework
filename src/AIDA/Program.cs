@@ -188,7 +188,7 @@ namespace AIDA
             a.Tools.Add(tool_schedulereminder);
 
             //Add welcoming message
-            string opening_msg = "Hello! I'm here to help. What can I do for you?";
+            string opening_msg = "Hi, I'm AIDA, and I'm here to help! What can I do for you?";
             a.Messages.Add(new Message(Role.assistant, opening_msg));
             Console.WriteLine(opening_msg);
 
