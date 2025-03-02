@@ -12,6 +12,7 @@ using System.Web;
 using System.Collections.Specialized;
 using TimHanewich.Bing;
 using TimHanewich.Bing.Search;
+using HtmlAgilityPack;
 
 namespace AIDA
 {
@@ -220,6 +221,11 @@ namespace AIDA
             Tool tool_searchweb = new Tool("search_web", "Perform a web search and get back information about a particular topic.");
             tool_searchweb.Parameters.Add(new ToolInputParameter("search_phrase", "The phrase to search for."));
             a.Tools.Add(tool_searchweb);
+
+            //Add tool: open web page
+            Tool tool_readwebpage = new Tool("read_webpage", "Read the contents of a particular web page.");
+            tool_readwebpage.Parameters.Add(new ToolInputParameter("url", "The specific URL of the webpage to read."));
+            a.Tools.Add(tool_readwebpage);
 
             //Add welcoming message
             string opening_msg = "Hi, I'm AIDA, and I'm here to help! What can I do for you?";
@@ -436,6 +442,26 @@ namespace AIDA
                                 tool_call_response_payload = "Unable to search the web because a Bing Search API key was never provided. Please add one to " + BingSearchApiKeyPath + " and restart AIDA to enable search.";
                             }
                         }
+                        else if (tc.ToolName == "read_webpage")
+                        {
+                            //Get URL
+                            string? url = null;
+                            JProperty? prop_url = tc.Arguments.Property("url");
+                            if (prop_url != null)
+                            {
+                                url = prop_url.Value.ToString();
+                            }
+
+                            //Open page
+                            if (url != null)
+                            {
+                                tool_call_response_payload = await ReadWebpage(url);
+                            }
+                            else
+                            {
+                                tool_call_response_payload = "Unable to read webpage because the 'url' parameter was not successfully provided by the AI.";
+                            }
+                        }
 
                         //Append tool response to messages
                         Message ToolResponseMessage = new Message();
@@ -587,6 +613,24 @@ namespace AIDA
             
             //provide response
             return JsonConvert.SerializeObject(results);
+        }
+
+        public static async Task<string> ReadWebpage(string url)
+        {
+            HttpClient hc = new HttpClient();
+            HttpResponseMessage resp = await hc.GetAsync(url);
+            if (resp.StatusCode != HttpStatusCode.OK)
+            {
+                return "Attempt to read the web page came back with status code '" + resp.StatusCode.ToString() + "', so unfortunately it cannot be read (wasn't 200 OK)";
+            }
+            string content = await resp.Content.ReadAsStringAsync();
+            
+            //Convert raw HTML to text
+            HtmlDocument doc = new HtmlDocument();
+            doc.LoadHtml(content);
+            string PlainText = doc.DocumentNode.InnerText;
+
+            return PlainText;
         }
 
 
