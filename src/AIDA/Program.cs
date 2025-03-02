@@ -13,6 +13,7 @@ using System.Collections.Specialized;
 using TimHanewich.Bing;
 using TimHanewich.Bing.Search;
 using HtmlAgilityPack;
+using System.Reflection;
 
 namespace AIDA
 {
@@ -243,6 +244,14 @@ namespace AIDA
             a.Messages.Add(new Message(Role.assistant, opening_msg));
             Console.WriteLine(opening_msg);
 
+            //Version just below
+            Assembly ass = Assembly.GetExecutingAssembly();
+            Version? v = ass.GetName().Version;
+            if (v != null)
+            {
+                AnsiConsole.MarkupLine("[gray][italic]AIDA version " + v.ToString().Substring(0, v.ToString().Length-2) + "[/][/]");
+            }
+            
             //Infinite chat
             while (true)
             {
