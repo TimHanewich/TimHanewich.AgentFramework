@@ -269,6 +269,11 @@ namespace AIDA
 
                     goto Input;
                 }
+                else if (input.ToLower() == "config") //Where the config files are
+                {
+                    Console.WriteLine(ConfigDirectory);
+                    goto Input;
+                }
 
                 //Prompt
                 Prompt:
