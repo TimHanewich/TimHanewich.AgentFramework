@@ -343,10 +343,7 @@ namespace AIDA
                             }
 
                             //Save file
-                            SaveFile(file_name, file_content);
-
-                            //Set success message
-                            tool_call_response_payload = "File successfully saved.";
+                            tool_call_response_payload = SaveFile(file_name, file_content);
                         }
                         else if (tc.ToolName == "read_txt_file")
                         {
@@ -554,10 +551,12 @@ namespace AIDA
             return content; //Just return the entire body
         }
 
-        public static void SaveFile(string file_name, string file_content)
+        public static string SaveFile(string file_name, string file_content)
         {
-            string full_path = System.IO.Path.Combine(Environment.CurrentDirectory, file_name);
-            System.IO.File.WriteAllText(file_name, file_content);
+            string DestinationDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Downloads");
+            string DestinationPath = System.IO.Path.Combine(DestinationDirectory, file_name);
+            System.IO.File.WriteAllText(DestinationPath, file_content);
+            return "File successfully saved to '" + DestinationPath + "'. Explicitly tell the user where the file was saved in confirming it was saved (tell the full file path).";
         }
 
         public static async Task RefreshMicrosoftGraphAccessTokensIfExpiredAsync(MicrosoftGraphHelper mgh, string MicrosoftGraphHelperLocalFilePath)
