@@ -159,7 +159,7 @@ namespace AIDA
             a.Credentials = azoai;
 
             //Add system message
-            a.Messages.Add(new Message(Role.system, "You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner.\n\nThe current date and time is " + DateTime.Now.ToString()));
+            a.Messages.Add(new Message(Role.system, "You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner."));
 
             //Add tool: check weather
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
@@ -181,6 +181,10 @@ namespace AIDA
             tool_schedulereminder.Parameters.Add(new ToolInputParameter("name", "The name of the reminder (what the user will be reminded of)."));
             tool_schedulereminder.Parameters.Add(new ToolInputParameter("datetime", "The date and time of the reminder, in the format of the following example: 3/2/2025 12:02:38 PM"));
             a.Tools.Add(tool_schedulereminder);
+
+            //Add tool: check current time
+            Tool tool_checkcurrenttime = new Tool("check_current_time", "Check the current date and time right now.");
+            a.Tools.Add(tool_checkcurrenttime);
 
             //Add welcoming message
             string opening_msg = "Hi, I'm AIDA, and I'm here to help! What can I do for you?";
@@ -322,6 +326,10 @@ namespace AIDA
                             {
                                 tool_call_response_payload = "Unable to schedule reminder because we are not logged in to Microsoft Outlook!";
                             }                            
+                        }
+                        else if (tc.ToolName == "check_current_time")
+                        {
+                            tool_call_response_payload = "The current date and time is " + DateTime.Now.ToString();
                         }
 
                         //Append tool response to messages
