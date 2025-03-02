@@ -11,7 +11,46 @@ namespace AgentFramework
     {
         public static void Main(string[] args)
         {
-            TestAsync().Wait();
+            //TestAsync().Wait();
+            SetupSystemFiles();
+        }
+
+        public static void SetupSystemFiles()
+        {
+            //Create config directory
+            string ConfigDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIDA");
+            if (System.IO.Directory.Exists(ConfigDirectory) == false)
+            {
+                System.IO.Directory.CreateDirectory(ConfigDirectory);
+            }
+
+            //Get AzureOpenAICredentials.json
+            AzureOpenAICredentials azoai;
+            string AzureOpenAICredentialsPath = Path.Combine(ConfigDirectory, "AzureOpenAICredentials.json");
+            if (System.IO.File.Exists(AzureOpenAICredentialsPath) == false)
+            {
+                //Write the file
+                System.IO.File.WriteAllText(AzureOpenAICredentialsPath, JsonConvert.SerializeObject(new AzureOpenAICredentials(), Formatting.Indented));
+                
+                Console.WriteLine("Your Azure OpenAI secrets were not provided! Please enter your Azure OpenAI details here: " + AzureOpenAICredentialsPath);
+                return;
+            }
+            else
+            {
+                string content = System.IO.File.ReadAllText(AzureOpenAICredentialsPath);
+                AzureOpenAICredentials? azoaicreds = JsonConvert.DeserializeObject<AzureOpenAICredentials>(content);
+                if (azoaicreds == null)
+                {
+                    Console.WriteLine("Was unable to parse valid Azure OpenAI credentials out of file '" + AzureOpenAICredentialsPath + "'. Please fix the errors and try again.");
+                    return;
+                }
+                else
+                {
+                    azoai = azoaicreds;
+                }
+            }
+
+
         }
 
         public static async Task TestAsync()
