@@ -183,7 +183,18 @@ namespace AIDA
             a.Credentials = azoai;
 
             //Add system message
-            a.Messages.Add(new Message(Role.system, "You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner.\n\nOnly use the 'search_web' tool if the user explicitly tells you to search the web or check online or do online research."));
+            List<string> SystemMessage = new List<string>();
+            SystemMessage.Add("You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner.");
+            SystemMessage.Add("Do not use emojis.");
+            SystemMessage.Add("Only use the 'search_web' tool if the user explicitly tells you to search the web or check online or do online research.");
+            SystemMessage.Add("If the user asks you to set a reminder for today or a certain amount of time from now, make sure you first check what time that reminder should be by checking the current date and time via the 'check_current_time' tool.");
+            string sysmsg = "";
+            foreach (string s in SystemMessage)
+            {
+                sysmsg = sysmsg + s + "\n\n";
+            }
+            sysmsg = sysmsg.Substring(0, sysmsg.Length - 2);
+            a.Messages.Add(new Message(Role.system, sysmsg));
 
             //Add tool: check weather
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
@@ -385,6 +396,9 @@ namespace AIDA
                                 //Call to function
                                 if (ReminderName != null && ReminderDateTime != null)
                                 {
+                                    //Console.WriteLine("About to call to schedule a reminder.");
+                                    //Console.WriteLine("Reminder name: " + ReminderName);
+                                    //Console.WriteLine("ReminderDateTime: " + ReminderDateTime.ToString());
                                     tool_call_response_payload = await ScheduleReminder(mgh, ReminderName, ReminderDateTime.Value, MicrosoftGraphHelperPath);
                                 }
                                 else
