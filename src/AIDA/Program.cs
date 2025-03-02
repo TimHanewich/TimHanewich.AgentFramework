@@ -10,6 +10,8 @@ using TimHanewich.MicrosoftGraphHelper;
 using TimHanewich.MicrosoftGraphHelper.Outlook;
 using System.Web;
 using System.Collections.Specialized;
+using TimHanewich.Bing;
+using TimHanewich.Bing.Search;
 
 namespace AIDA
 {
@@ -64,6 +66,27 @@ namespace AIDA
                         azoai = azoaicreds;
                     }
                 }
+            }
+
+            //Try to retrieve bing search api key (an azure service)
+            BingSearchService? bss = null;
+            string BingSearchApiKeyPath = Path.Combine(ConfigDirectory, "BingSearchApiKey.txt");
+            if (System.IO.File.Exists(BingSearchApiKeyPath))
+            {
+                string bingkey = System.IO.File.ReadAllText(BingSearchApiKeyPath);
+                if (bingkey != "")
+                {
+                    bss = new BingSearchService(bingkey);
+                }
+                else
+                {
+                    AnsiConsole.MarkupLine("[yellow]A Bing Search API key was not found in file '" + BingSearchApiKeyPath + "'. Please put an API key in there and re-start AIDA if you wish to enable web search.[/]");
+                }
+            }
+            else
+            {
+                System.IO.File.WriteAllText(BingSearchApiKeyPath, ""); //Create the file
+                AnsiConsole.MarkupLine("[yellow]Unable to find your Bing Search API key! If you wish to enable web search, please place it in here: " + BingSearchApiKeyPath + "[/]");
             }
 
             //Try to revive stored MicrosoftGraphHelper
@@ -159,7 +182,7 @@ namespace AIDA
             a.Credentials = azoai;
 
             //Add system message
-            a.Messages.Add(new Message(Role.system, "You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner."));
+            a.Messages.Add(new Message(Role.system, "You are AIDA, Artificial Intelligence Desktop Assistant. Your role is to be a friendly and helpful assistant. Speak in a playful, lighthearted, and fun manner.\n\nOnly use the 'search_web' tool if the user explicitly tells you to search the web or check online or do online research."));
 
             //Add tool: check weather
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
@@ -192,6 +215,11 @@ namespace AIDA
             tool_sendemail.Parameters.Add(new ToolInputParameter("subject", "The subject line of the email."));
             tool_sendemail.Parameters.Add(new ToolInputParameter("body", "The body (content) of the email."));
             a.Tools.Add(tool_sendemail);
+            
+            //Add tool: search web
+            Tool tool_searchweb = new Tool("search_web", "Perform a web search and get back information about a particular topic.");
+            tool_searchweb.Parameters.Add(new ToolInputParameter("search_phrase", "The phrase to search for."));
+            a.Tools.Add(tool_searchweb);
 
             //Add welcoming message
             string opening_msg = "Hi, I'm AIDA, and I'm here to help! What can I do for you?";
@@ -382,6 +410,32 @@ namespace AIDA
                                 tool_call_response_payload = "Unable to send email because we are not logged in to Microsoft Outlook!";
                             }
                         }
+                        else if (tc.ToolName == "search_web")
+                        {
+                            if (bss != null)
+                            {
+                                string? search_phrase = null;
+                                JProperty? prop_search_phrase = tc.Arguments.Property("search_phrase");
+                                if (prop_search_phrase != null)
+                                {
+                                    search_phrase = prop_search_phrase.Value.ToString();
+                                }
+
+                                //Search
+                                if (search_phrase != null)
+                                {
+                                    tool_call_response_payload = await SearchWeb(bss, search_phrase);
+                                }
+                                else
+                                {
+                                    tool_call_response_payload = "Unable to trigger web search because the search phase parameter was not successfully provided by the AI model.";
+                                }
+                            }
+                            else
+                            {
+                                tool_call_response_payload = "Unable to search the web because a Bing Search API key was never provided. Please add one to " + BingSearchApiKeyPath + " and restart AIDA to enable search.";
+                            }
+                        }
 
                         //Append tool response to messages
                         Message ToolResponseMessage = new Message();
@@ -517,6 +571,23 @@ namespace AIDA
             return "Email sent successfully.";
         }
 
+        public static async Task<string> SearchWeb(BingSearchService bss, string search_phrase)
+        {
+            //Search
+            BingSearchResult[] results;
+            try
+            {
+                results = await bss.SearchAsync(search_phrase);
+            }
+            catch (Exception ex)
+            {
+                return "Bing search failed! Error message: " + ex.Message;
+            }
+
+            
+            //provide response
+            return JsonConvert.SerializeObject(results);
+        }
 
 
     }
