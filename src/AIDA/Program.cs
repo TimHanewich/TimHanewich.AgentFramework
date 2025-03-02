@@ -4,21 +4,22 @@ using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
+using AgentFramework;
 
-namespace AgentFramework
+namespace AIDA
 {
     public class Program
     {
         public static void Main(string[] args)
         {
-            //TestAsync().Wait();
-            SetupSystemFiles();
+            RunAsync().Wait();
         }
 
-        public static void SetupSystemFiles()
+        public static async Task RunAsync()
         {
             //Create config directory
             string ConfigDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIDA");
+            Console.WriteLine("Config directory: " + ConfigDirectory);
             if (System.IO.Directory.Exists(ConfigDirectory) == false)
             {
                 System.IO.Directory.CreateDirectory(ConfigDirectory);
@@ -51,10 +52,6 @@ namespace AgentFramework
             }
 
 
-        }
-
-        public static async Task TestAsync()
-        {
             Agent a = new Agent();
             a.Credentials = JsonConvert.DeserializeObject<AzureOpenAICredentials>(System.IO.File.ReadAllText(@"C:\Users\timh\Downloads\AgentFramework\credentials.json"));
 
