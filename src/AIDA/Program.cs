@@ -66,17 +66,12 @@ namespace AIDA
                 }
             }
 
-            //Try to get microsoft graph credentials from file (if they're there)
+            //Try to revive stored MicrosoftGraphHelper
             MicrosoftGraphHelper? mgh = null;
-            string GraphTokenPath = Path.Combine(ConfigDirectory, "MicrosoftGraphTokens.json");
-            if (System.IO.File.Exists(GraphTokenPath))
+            string MicrosoftGraphHelperPath = Path.Combine(ConfigDirectory, "MicrosoftGraphHelper.json");
+            if (System.IO.File.Exists(MicrosoftGraphHelperPath))
             {
-                MicrosoftGraphTokenPayload? TokenPayload = JsonConvert.DeserializeObject<MicrosoftGraphTokenPayload>(System.IO.File.ReadAllText(GraphTokenPath));
-                if (TokenPayload != null)
-                {
-                    mgh = new MicrosoftGraphHelper();
-                    mgh.LastReceivedTokenPayload = TokenPayload;
-                }
+                mgh = JsonConvert.DeserializeObject<MicrosoftGraphHelper>(System.IO.File.ReadAllText(MicrosoftGraphHelperPath));
             }
 
             //If we were unable to get the microsoft graph credentials from file, ask if they want to sign in
@@ -145,7 +140,7 @@ namespace AIDA
                     if (GraphAuthenticationSuccessful)
                     {
                         AnsiConsole.Markup("Storing Graph credentials for future use... ");
-                        System.IO.File.WriteAllText(GraphTokenPath, JsonConvert.SerializeObject(mgh.LastReceivedTokenPayload, Formatting.Indented));
+                        System.IO.File.WriteAllText(MicrosoftGraphHelperPath, JsonConvert.SerializeObject(mgh, Formatting.Indented));
                         AnsiConsole.MarkupLine("[green]saved[/]!");
                     }
                     else
@@ -202,16 +197,15 @@ namespace AIDA
                 {
                     Console.Write("> ");
                     input = Console.ReadLine();
+                    Console.WriteLine();
                 }
                 a.Messages.Add(new Message(Role.user, input));
 
                 //Prompt
                 Prompt:
-                Console.WriteLine();
-                Console.Write("Thinking...");
+                AnsiConsole.Markup("[gray][italic]thinking... [/][/]");
                 Message response = await a.PromptAsync();
                 a.Messages.Add(response); //Add response to message array
-                Console.WriteLine();
                 Console.WriteLine();
 
                 //Write content if there is some
@@ -228,7 +222,7 @@ namespace AIDA
                 {
                     foreach (ToolCall tc in response.ToolCalls)
                     {
-                        Console.Write("Calling tool '" + tc.ToolName + "'... ");
+                        AnsiConsole.Markup("[gray][italic]calling tool '" + tc.ToolName + "'... [/][/]");
                         string tool_call_response_payload = "";
 
                         //Call to the tool and save the response from that tool
@@ -317,7 +311,7 @@ namespace AIDA
                                 //Call to function
                                 if (ReminderName != null && ReminderDateTime != null)
                                 {
-                                    tool_call_response_payload = await ScheduleReminder(mgh, ReminderName, ReminderDateTime.Value, GraphTokenPath);
+                                    tool_call_response_payload = await ScheduleReminder(mgh, ReminderName, ReminderDateTime.Value, MicrosoftGraphHelperPath);
                                 }
                                 else
                                 {
@@ -338,7 +332,7 @@ namespace AIDA
                         a.Messages.Add(ToolResponseMessage);
 
                         //Confirm completion of tool call
-                        Console.WriteLine("Complete!");
+                        AnsiConsole.MarkupLine("[gray][italic]complete[/][/]");
                     }
 
                     //Prompt right away (do not ask for user for input yet)
@@ -375,7 +369,7 @@ namespace AIDA
             System.IO.File.WriteAllText(file_name, file_content);
         }
 
-        public static async Task<string> ScheduleReminder(MicrosoftGraphHelper mgh, string reminder_name, DateTime time, string GraphTokenLocalFilePath)
+        public static async Task<string> ScheduleReminder(MicrosoftGraphHelper mgh, string reminder_name, DateTime time, string MicrosoftGraphHelperLocalFilePath)
         {
             //Check if credentials need to be refreshed
             if (mgh.AccessTokenHasExpired())
@@ -388,11 +382,12 @@ namespace AIDA
                 }
                 catch (Exception ex)
                 {
+                    AnsiConsole.MarkupLine("[red]Refreshing of graph token failed: " + ex.Message + "[/]");
                     return "Unable to set reminder due to refreshing of Microsoft Graph Access tokens failing. Error message: " + ex.Message;
                 }
 
                 //Save updated credentials to file
-                System.IO.File.WriteAllText(GraphTokenLocalFilePath, JsonConvert.SerializeObject(mgh.LastReceivedTokenPayload, Formatting.Indented));
+                System.IO.File.WriteAllText(MicrosoftGraphHelperLocalFilePath, JsonConvert.SerializeObject(mgh, Formatting.Indented));
             }
 
             //Set subject
@@ -412,6 +407,7 @@ namespace AIDA
             }
             catch (Exception ex)
             {
+                AnsiConsole.MarkupLine("[red]Scheduling of reminder failed: " + ex.Message + "[/]");
                 return "Attempt to schedule reminder failed. There was an issue when creating it. Error message: " + ex.Message;
             }
             
