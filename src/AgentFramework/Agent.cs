@@ -16,6 +16,24 @@ namespace AgentFramework
         public List<Tool> Tools {get; set;}
         public AzureOpenAICredentials Credentials {get; set;}
 
+        //Private trackers
+        private int _CumulativePromptTokens;
+        public int CumulativePromptTokens
+        {
+            get
+            {
+                return _CumulativePromptTokens;
+            }
+        }
+        private int _CumulativeCompletionTokens;
+        public int CumulativeCompletionTokens
+        {
+            get
+            {
+                return _CumulativeCompletionTokens;
+            }
+        }
+
         public Agent()
         {
             Messages = new List<Message>();
@@ -61,9 +79,24 @@ namespace AgentFramework
             {
                 throw new Exception("Call to model failed with code '" + resp.StatusCode.ToString() + "'. Msg: " + content);
             }
+
+            JObject contentjo = JObject.Parse(content);
+
+            //Get prompt tokens
+            JToken? prompt_tokens = contentjo.SelectToken("usage.prompt_tokens");
+            if (prompt_tokens != null)
+            {
+                _CumulativePromptTokens = _CumulativePromptTokens + Convert.ToInt32(prompt_tokens.ToString());
+            }
+
+            //Get completion tokens
+            JToken? completion_tokens = contentjo.SelectToken("usage.completion_tokens");
+            if (completion_tokens != null)
+            {
+                _CumulativeCompletionTokens = _CumulativeCompletionTokens + Convert.ToInt32(completion_tokens.ToString());
+            }
             
             //Strip out message portion
-            JObject contentjo = JObject.Parse(content);
             JToken? message = contentjo.SelectToken("choices[0].message");
             if (message == null)
             {

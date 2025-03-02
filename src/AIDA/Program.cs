@@ -236,6 +236,7 @@ namespace AIDA
             while (true)
             {
                 //Collect input
+                Input:
                 Console.WriteLine();
                 string? input = null;
                 while (input == null)
@@ -245,6 +246,29 @@ namespace AIDA
                     Console.WriteLine();
                 }
                 a.Messages.Add(new Message(Role.user, input));
+
+                //Handle special inputs
+                if (input.ToLower() == "tokens")
+                {
+                    AnsiConsole.MarkupLine("[blue][underline]Cumulative Tokens so Far[/][/]");
+                    AnsiConsole.MarkupLine("[blue]Prompt tokens: [bold]" + a.CumulativePromptTokens.ToString("#,##0") + "[/][/]");
+                    AnsiConsole.MarkupLine("[blue]Completion tokens: [bold]" + a.CumulativeCompletionTokens.ToString("#,##0") + "[/][/]");
+
+                    //Model costs (this is for GPT-4o-mini)
+                    float input_cost_per_1M = 0.15f;
+                    float output_cost_per_1M = 0.60f;
+
+                    //Calculate costs
+                    float input_costs = (input_cost_per_1M / 1000000f) * a.CumulativePromptTokens;
+                    float output_costs = (output_cost_per_1M / 1000000f) * a.CumulativeCompletionTokens;
+
+                    Console.WriteLine();
+                    AnsiConsole.MarkupLine("[blue][underline]Token Cost Estimates[/][/]");
+                    AnsiConsole.MarkupLine("[blue]Input token costs: [bold]$" + input_costs.ToString("#,##0.00") + "[/][/]");
+                    AnsiConsole.MarkupLine("[blue]Output token costs: [bold]$" + output_costs.ToString("#,##0.00") + "[/][/]");
+
+                    goto Input;
+                }
 
                 //Prompt
                 Prompt:
