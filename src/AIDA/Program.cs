@@ -17,9 +17,8 @@ namespace AIDA
 
         public static async Task RunAsync()
         {
-            //Create config directory
+            //Check Config directory for config files
             string ConfigDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AIDA");
-            Console.WriteLine("Config directory: " + ConfigDirectory);
             if (System.IO.Directory.Exists(ConfigDirectory) == false)
             {
                 System.IO.Directory.CreateDirectory(ConfigDirectory);
@@ -47,18 +46,24 @@ namespace AIDA
                 }
                 else
                 {
-                    azoai = azoaicreds;
+                    if (azoaicreds.URL == "" || azoaicreds.ApiKey == "")
+                    {
+                        Console.WriteLine("The Azure OpenAI credentials in '" + AzureOpenAICredentialsPath + "' were not populated. Please add your Azure OpenAI details and try again.");
+                        return;
+                    }
+                    else
+                    {
+                        azoai = azoaicreds;
+                    }
                 }
             }
 
-
+            //Create the agent
             Agent a = new Agent();
-            a.Credentials = JsonConvert.DeserializeObject<AzureOpenAICredentials>(System.IO.File.ReadAllText(@"C:\Users\timh\Downloads\AgentFramework\credentials.json"));
+            a.Credentials = azoai;
 
             //Add system message
             a.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
-
-            
 
             //Add tool: check weather
             Tool tool = new Tool("check_temperature", "Check the temperature for a given location.");
@@ -80,6 +85,7 @@ namespace AIDA
             a.Messages.Add(new Message(Role.assistant, opening_msg));
             Console.WriteLine(opening_msg);
 
+            //Infinite chat
             while (true)
             {
                 //Collect input
@@ -189,7 +195,7 @@ namespace AIDA
                 
 
                 
-            }
+            } //END INFINITE CHAT
             
 
 
