@@ -4,7 +4,36 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <PackageId>TimHanewich.AgentFramework</PackageId>
+    <Title>TimHanewich.AgentFramework</Title>
+    <Version>0.1.0</Version>
+    <Authors>Tim Hanewich</Authors>
+    <Product>TimHanewich.AgentFramework</Product>
+    <Description>Framework for developing agents through faciliting LLM inference.</Description>
+    <Copyright>Tim Hanewich</Copyright>
+    <PackageProjectUrl>https://github.com/TimHanewich/TimHanewich.AgentFramework</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryUrl>https://github.com/TimHanewich/TimHanewich.AgentFramework</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>agents;agent;ai;llm;openai</PackageTags>
+    <PackageLicenseFile>license.md</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\license.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
