@@ -4,7 +4,6 @@ using Newtonsoft.Json.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Net;
-using AgentFramework;
 using Spectre.Console;
 using TimHanewich.MicrosoftGraphHelper;
 using TimHanewich.MicrosoftGraphHelper.Outlook;
@@ -14,6 +13,7 @@ using TimHanewich.Bing;
 using TimHanewich.Bing.Search;
 using HtmlAgilityPack;
 using System.Reflection;
+using TimHanewich.AgentFramework;
 
 namespace AIDA
 {
