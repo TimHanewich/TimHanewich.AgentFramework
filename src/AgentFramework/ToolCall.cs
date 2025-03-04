@@ -8,13 +8,13 @@ namespace TimHanewich.AgentFramework
     {
         public string ToolName {get; set;}
         public JObject Arguments {get; set;}
-        public string ID {get; set;}
+        public string? ID {get; set;}
 
         public ToolCall()
         {
             ToolName = "";
             Arguments = new JObject();
-            ID = "";
+            ID = null;
         }
 
         public static ToolCall Parse(JObject tool_call)
