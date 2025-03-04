@@ -10,7 +10,7 @@ namespace AgentFrameworkTesting
         public static void Main(string[] args)
         {
             TimHanewich.AgentFramework.OllamaModel om = new TimHanewich.AgentFramework.OllamaModel();
-            om.ModelIdentifier = "llama3.2:3b";
+            om.ModelIdentifier = "qwen2.5:7b";
 
             Agent a = new Agent();
             a.Model = om;
@@ -21,12 +21,11 @@ namespace AgentFrameworkTesting
 
 
 
-            a.Messages.Add(new Message(Role.user, "What is the temperature?"));
+            a.Messages.Add(new Message(Role.user, "What is the temperature outside?"));
             Console.WriteLine("Calling...");
             Message m = a.PromptAsync().Result;
-            a.Messages.Add(m);
 
-            Console.WriteLine(JsonConvert.SerializeObject(a, Formatting.Indented));
+            Console.WriteLine(JsonConvert.SerializeObject(m, Formatting.Indented));
         }
     }
 }
