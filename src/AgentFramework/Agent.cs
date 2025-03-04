@@ -8,13 +8,13 @@ using Newtonsoft.Json.Linq;
 using System.Text;
 using System.Text.Encodings;
 
-namespace AgentFramework
+namespace TimHanewich.AgentFramework
 {
     public class Agent
     {
         public List<Message> Messages {get; set;}
         public List<Tool> Tools {get; set;}
-        public AzureOpenAICredentials Credentials {get; set;}
+        public IModelConnection? Model {get; set;}
 
         //Private trackers
         private int _CumulativePromptTokens;
@@ -38,76 +38,25 @@ namespace AgentFramework
         {
             Messages = new List<Message>();
             Tools = new List<Tool>();
-            Credentials = new AzureOpenAICredentials();
         }
 
         //Ask model to generate the next message, given the current context of messages
         public async Task<Message> PromptAsync()
         {
-            HttpRequestMessage req = new HttpRequestMessage();
-            req.Method = HttpMethod.Post;
-            req.RequestUri = new Uri(Credentials.URL);
-            req.Headers.Add("api-key", Credentials.ApiKey);
-
-            JObject body = new JObject();
-
-            //Add messages
-            JArray messages = new JArray();
-            foreach (Message msg in Messages)
+            if (Model == null)
             {
-                messages.Add(msg.ToJSON());
-            }
-            body.Add("messages", messages);
-
-            //Add tools
-            if (Tools.Count > 0)
-            {
-                JArray tools = new JArray();
-                foreach (Tool tool in Tools)
-                {
-                    tools.Add(tool.ToJSON());
-                }
-                body.Add("tools", tools);
+                throw new Exception("Unable to prompt any model as you did not provide a model connection of any kind to this agent!");
             }
 
-            //Make API call
-            req.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/json"); //add body to request body
-            HttpClient hc = new HttpClient();
-            HttpResponseMessage resp = await hc.SendAsync(req);
-            string content = await resp.Content.ReadAsStringAsync();
-            if (resp.StatusCode != HttpStatusCode.OK)
-            {
-                throw new Exception("Call to model failed with code '" + resp.StatusCode.ToString() + "'. Msg: " + content);
-            }
+            //Invoke the inference via whatever model they provided!
+            InferenceResponse ir = await Model.InvokeInferenceAsync(Messages.ToArray(), Tools.ToArray());
 
-            JObject contentjo = JObject.Parse(content);
+            //Increment token consumptions
+            _CumulativePromptTokens = _CumulativePromptTokens + ir.PromptTokensConsumed;
+            _CumulativeCompletionTokens = CumulativeCompletionTokens + ir.CompletionTokensConsumed;
 
-            //Get prompt tokens
-            JToken? prompt_tokens = contentjo.SelectToken("usage.prompt_tokens");
-            if (prompt_tokens != null)
-            {
-                _CumulativePromptTokens = _CumulativePromptTokens + Convert.ToInt32(prompt_tokens.ToString());
-            }
-
-            //Get completion tokens
-            JToken? completion_tokens = contentjo.SelectToken("usage.completion_tokens");
-            if (completion_tokens != null)
-            {
-                _CumulativeCompletionTokens = _CumulativeCompletionTokens + Convert.ToInt32(completion_tokens.ToString());
-            }
-            
-            //Strip out message portion
-            JToken? message = contentjo.SelectToken("choices[0].message");
-            if (message == null)
-            {
-                throw new Exception("Property 'message' not in model's response. Full content of response: " + contentjo.ToString());
-            }
-            JObject ResponseMessage = (JObject)message;
-            
-            //Parse the message
-            Message ToReturn = Message.Parse(ResponseMessage);
-
-            return ToReturn;
+            //return the message
+            return ir.Message;
         }
 
         

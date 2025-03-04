@@ -2,7 +2,7 @@ using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace AgentFramework
+namespace TimHanewich.AgentFramework
 {
     public class ToolCall
     {

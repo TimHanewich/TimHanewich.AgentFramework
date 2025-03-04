@@ -1,6 +1,6 @@
 using System;
 
-namespace AgentFramework
+namespace TimHanewich.AgentFramework
 {
     public class ToolInputParameter
     {
