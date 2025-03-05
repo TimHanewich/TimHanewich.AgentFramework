@@ -1,4 +1,6 @@
 # TimHanewich.AgentFramework
+![banner](https://i.imgur.com/BcqRGXg.png)
+
 I built a lightweight .NET (C#) library for building AI agents with large language models. `TimHanewich.AgentFramework` allows for you to build AI agents with large language models. It has a lightweight and modular design that makes it easy to assemble agents, provide them with tools, manage message queues, monitor token consumption, and more.
 
 `TimHanewich.AgentFramework` is available [on NuGet](https://www.nuget.org/packages/TimHanewich.AgentFramework). To insall in your .NET project, run the following command to download:
