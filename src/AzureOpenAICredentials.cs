@@ -33,7 +33,44 @@ namespace TimHanewich.AgentFramework
             JArray jmessages = new JArray();
             foreach (Message msg in messages)
             {
-                jmessages.Add(msg.ToJSON());
+                //Create and add
+                JObject ThisMsg = new JObject();
+                jmessages.Add(ThisMsg);
+
+                //Add role
+                ThisMsg.Add("role", msg.Role.ToString());
+
+                //add content
+                ThisMsg.Add("content", msg.Content);
+
+                //Add tool calls
+                if (msg.ToolCalls.Length > 0)
+                {
+                    JArray tool_calls = new JArray();
+                    ThisMsg.Add("tool_calls", tool_calls);
+                    foreach (ToolCall tc in msg.ToolCalls)
+                    {
+                        JObject tool_call = new JObject();
+
+                        //Add type and ID
+                        tool_call.Add("type", "function");
+                        tool_call.Add("id", tc.ID);
+
+                        //function
+                        JObject function = new JObject();
+                        tool_call.Add("function", function);
+                        function.Add("name", tc.ToolName);
+                        function.Add("arguments", tc.Arguments.ToString()); //add arguments as JSON-encoded string (this is how it is supposed to be, per API specification)
+
+                        tool_calls.Add(tool_call);
+                    }
+                }
+
+                //Add tool call ID?
+                if (msg.ToolCallID != null)
+                {
+                    ThisMsg.Add("tool_call_id", msg.ToolCallID);
+                }
             }
             body.Add("messages", jmessages);
 
