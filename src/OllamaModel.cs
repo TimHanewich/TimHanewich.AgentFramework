@@ -34,7 +34,34 @@ namespace TimHanewich.AgentFramework
             JArray jmessages = new JArray();
             foreach (Message msg in messages)
             {
-                jmessages.Add(msg.ToJSON());
+                //Add new message
+                JObject msgJson = new JObject();
+                jmessages.Add(msgJson);
+
+                //Add role
+                msgJson.Add("role", msg.Role.ToString());
+                
+                //Add content
+                if (msg.Content != null)
+                {
+                    msgJson.Add("content", msg.Content);
+                }
+
+                //tool calls?
+                if (msg.ToolCalls.Length > 0)
+                {
+                    JArray ToolCallsJson = new JArray();
+                    msgJson.Add("tool_calls", ToolCallsJson);
+                    foreach (ToolCall tc in msg.ToolCalls)
+                    {
+                        JObject ToolCallJson = new JObject();
+                        ToolCallsJson.Add(ToolCallJson);
+                        JObject function = new JObject();
+                        ToolCallJson.Add("function", function);
+                        function.Add("name", tc.ToolName);
+                        function.Add("arguments", tc.Arguments); //add as direct JSON (NOT encoded string like Azure OpenAI calls for)
+                    }
+                }
             }
             body.Add("messages", jmessages);
 
