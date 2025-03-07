@@ -29,7 +29,7 @@ You can also instead **use a local model running through Ollama** if you prefer!
 using TimHanwich.AgentFramework;
 
 Agent myAgent = new Agent();
-myAgent.Model = new OllamaModel(){ModelIdentifier = "llama3.2:3b"};
+myAgent.Model = new OllamaModel("llama3.2:3b");
 myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
 myAgent.Messages.Add(new Message(Role.user, "Why is the sky blue?"));
 Message aiResponse = await myAgent.PromptAsync();
