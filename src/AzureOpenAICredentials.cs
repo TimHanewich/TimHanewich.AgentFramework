@@ -20,6 +20,12 @@ namespace TimHanewich.AgentFramework
             ApiKey = "";
         }
 
+        public AzureOpenAICredentials(string url, string api_key)
+        {
+            URL = url;
+            ApiKey = api_key;
+        }
+
         public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools, bool json_mode)
         {
             HttpRequestMessage req = new HttpRequestMessage();

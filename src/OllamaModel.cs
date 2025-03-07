@@ -18,6 +18,11 @@ namespace TimHanewich.AgentFramework
             ModelIdentifier = "";
         }
 
+        public OllamaModel(string model_identifier)
+        {
+            ModelIdentifier = model_identifier;
+        }
+
         public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools, bool json_mode)
         {
             HttpRequestMessage req = new HttpRequestMessage();
