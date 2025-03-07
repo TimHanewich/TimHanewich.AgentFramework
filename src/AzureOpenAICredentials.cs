@@ -20,7 +20,7 @@ namespace TimHanewich.AgentFramework
             ApiKey = "";
         }
 
-        public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools)
+        public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools, bool json_mode)
         {
             HttpRequestMessage req = new HttpRequestMessage();
             req.Method = HttpMethod.Post;
@@ -83,6 +83,14 @@ namespace TimHanewich.AgentFramework
                     jtools.Add(tool.ToJSON());
                 }
                 body.Add("tools", jtools);
+            }
+
+            //Json mode?
+            if (json_mode)
+            {
+                JObject response_format = new JObject();
+                response_format.Add("type", "json_object");
+                body.Add("response_format", response_format);
             }
 
             //Make API call

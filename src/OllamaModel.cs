@@ -18,7 +18,7 @@ namespace TimHanewich.AgentFramework
             ModelIdentifier = "";
         }
 
-        public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools)
+        public async Task<InferenceResponse> InvokeInferenceAsync(Message[] messages, Tool[] tools, bool json_mode)
         {
             HttpRequestMessage req = new HttpRequestMessage();
             req.Method = HttpMethod.Post;
@@ -74,6 +74,12 @@ namespace TimHanewich.AgentFramework
                     jtools.Add(tool.ToJSON());
                 }
                 body.Add("tools", jtools);
+            }
+
+            //Json mode?
+            if (json_mode)
+            {
+                body.Add("format", "json");
             }
 
             //Make API call

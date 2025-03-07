@@ -43,7 +43,7 @@ namespace TimHanewich.AgentFramework
         }
 
         //Ask model to generate the next message, given the current context of messages
-        public async Task<Message> PromptAsync(int past_messages_included = 10)
+        public async Task<Message> PromptAsync(int past_messages_included = 10, bool json_mode = false)
         {
             //Validate that there is a model
             if (Model == null)
@@ -95,8 +95,7 @@ namespace TimHanewich.AgentFramework
             }
 
             //Invoke the inference via whatever model they provided!
-            Console.WriteLine(JsonConvert.SerializeObject(MessagesToPrompt, Formatting.Indented));
-            InferenceResponse ir = await Model.InvokeInferenceAsync(MessagesToPrompt.ToArray(), Tools.ToArray());
+            InferenceResponse ir = await Model.InvokeInferenceAsync(MessagesToPrompt.ToArray(), Tools.ToArray(), json_mode);
 
             //Increment token consumptions
             _CumulativePromptTokens = _CumulativePromptTokens + ir.PromptTokensConsumed;
