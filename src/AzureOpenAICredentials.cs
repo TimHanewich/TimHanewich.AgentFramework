@@ -102,6 +102,7 @@ namespace TimHanewich.AgentFramework
             //Make API call
             req.Content = new StringContent(body.ToString(), Encoding.UTF8, "application/json"); //add body to request body
             HttpClient hc = new HttpClient();
+            hc.Timeout = new TimeSpan(24, 0, 0);
             HttpResponseMessage resp = await hc.SendAsync(req);
             string content = await resp.Content.ReadAsStringAsync();
             if (resp.StatusCode != HttpStatusCode.OK)
