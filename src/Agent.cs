@@ -74,41 +74,6 @@ namespace TimHanewich.AgentFramework
             }
             MessagesToPrompt.Reverse(); //Flip the order (since we just added them in the opposite order)
 
-            //But now ensure that we don't have an individual tool call response message WITHOUT the original tool call request message from the model
-            //Both have to be there... otherwise, if we have a message in the array that is the response but the original tool call request isn't there, the API will get confused. It doesnt know what tool call the response is for.
-            List<Message> ToRemove = new List<Message>();
-            foreach (Message msg in Messages)
-            {
-                if (msg.ToolCallID != null)
-                {
-                    if (msg.ToolCallID != "")
-                    {
-                        //Find match?
-                        bool HaveMatchingToolCallRequestForThisToolCallResponse = false;
-                        foreach (Message msg2 in Messages)
-                        {
-                            foreach (ToolCall tc in msg2.ToolCalls)
-                            {
-                                if (tc.ID == msg.ToolCallID)
-                                {
-                                    HaveMatchingToolCallRequestForThisToolCallResponse = true;
-                                }
-                            }
-                        }
-
-                        //Did we find a match?
-                        if (HaveMatchingToolCallRequestForThisToolCallResponse == false)
-                        {
-                            ToRemove.Add(msg);
-                        }
-                    }
-                }
-            }
-            foreach (Message msg in ToRemove)
-            {
-                Messages.Remove(msg);
-            }
-
             //Find system message... ensure at least that is included
             Message? SystemMessage = null;
             foreach (Message msg in Messages)
@@ -120,13 +85,54 @@ namespace TimHanewich.AgentFramework
                         SystemMessage = msg;
                     }
                 }
-            }   
-            
+            }  
+
             //If there indeed was a system message, replace the first message with that system message
             // (it may already be in there as the first item, but just replacing it anyway is fine)
             if (SystemMessage != null)
             {
                 MessagesToPrompt[0] = SystemMessage;
+            }
+
+            //But now ensure that we don't have an individual tool call response message WITHOUT the original tool call request message from the model
+            //Both have to be there... otherwise, if we have a message in the array that is the response but the original tool call request isn't there, the API will get confused. It doesnt know what tool call the response is for.
+            List<Message> ToRemove = new List<Message>();
+            foreach (Message msg in MessagesToPrompt)
+            {
+                if (msg.Role == Role.tool)
+                {
+                    if (msg.ToolCallID != null)
+                    {
+                        if (msg.ToolCallID != "")
+                        {
+                            //Find match?
+                            bool HaveMatchingToolCallRequestForThisToolCallResponse = false;
+                            foreach (Message msg2 in MessagesToPrompt)
+                            {
+                                if (msg2.Role == Role.assistant)
+                                {
+                                    foreach (ToolCall tc in msg2.ToolCalls)
+                                    {
+                                        if (tc.ID == msg.ToolCallID)
+                                        {
+                                            HaveMatchingToolCallRequestForThisToolCallResponse = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            //Did we find a match?
+                            if (HaveMatchingToolCallRequestForThisToolCallResponse == false)
+                            {
+                                ToRemove.Add(msg);
+                            }
+                        }
+                    }
+                }
+            }
+            foreach (Message msg in ToRemove)
+            {
+                MessagesToPrompt.Remove(msg);
             }
 
             //Invoke the inference via whatever model they provided!
