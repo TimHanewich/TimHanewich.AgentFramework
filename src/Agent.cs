@@ -43,7 +43,7 @@ namespace TimHanewich.AgentFramework
         }
 
         //Ask model to generate the next message, given the current context of messages
-        public async Task<Message> PromptAsync(int past_messages_included = 10, bool json_mode = false)
+        public async Task<Message> PromptAsync(int past_messages_included = 9999, bool json_mode = false)
         {
             //Validate that there is a model
             if (Model == null)
