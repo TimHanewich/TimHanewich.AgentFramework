@@ -2,7 +2,7 @@ using System;
 using Newtonsoft.Json.Linq;
 using TimHanewich.Foundry.OpenAI.Responses;
 
-namespace ResponsesAgents
+namespace TimHanewich.AgentFramework
 {
     public abstract class ExecutableFunction
     {

@@ -4,7 +4,7 @@ using Newtonsoft.Json.Linq;
 using TimHanewich.Foundry;
 using TimHanewich.Foundry.OpenAI.Responses;
 
-namespace ResponsesAgents
+namespace TimHanewich.AgentFramework
 {
     public class Program
     {

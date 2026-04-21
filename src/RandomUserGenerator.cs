@@ -2,7 +2,7 @@ using System;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 
-namespace ResponsesAgents
+namespace TimHanewich.AgentFramework
 {
     public class RandomUserGenerator : ExecutableFunction
     {
