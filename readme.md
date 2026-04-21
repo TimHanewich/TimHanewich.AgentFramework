@@ -1,137 +1,150 @@
 # TimHanewich.AgentFramework
 ![banner](https://i.imgur.com/BcqRGXg.png)
 
-I built a lightweight .NET (C#) library for building AI agents with large language models. `TimHanewich.AgentFramework` allows for you to build AI agents with large language models. It has a lightweight and modular design that makes it easy to assemble agents, provide them with tools, manage message queues, monitor token consumption, and more.
+A lightweight .NET (C#) library for building AI agents on top of the **OpenAI Responses API** via the [TimHanewich.Foundry](https://github.com/TimHanewich/TimHanewich.Foundry) SDK. `TimHanewich.AgentFramework` provides a simple abstraction layer for assembling agents with tools, orchestrating multi-agent workflows, tracking token consumption, and more.
 
-`TimHanewich.AgentFramework` is available [on NuGet](https://www.nuget.org/packages/TimHanewich.AgentFramework). To insall in your .NET project, run the following command to download:
+`TimHanewich.AgentFramework` is available [on NuGet](https://www.nuget.org/packages/TimHanewich.AgentFramework). To install in your .NET project, run the following command to download:
 
 ```
 dotnet add package TimHanewich.AgentFramework
 ```
 
 ## How to use TimHanewich.AgentFramework
-It is very easy building AI agents and integrating with **an LLM service like Azure OpenAI or OpenAI directly**. For example:
-
-```
-using TimHanwich.AgentFramework;
-
-Agent myAgent = new Agent();
-myAgent.Model = new AzureOpenAICredentials(){URL = "<endpoint>", ApiKey = "<key>"};
-myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
-myAgent.Messages.Add(new Message(Role.user, "Why is the sky blue?"));
-Message aiResponse = await myAgent.PromptAsync();
-Console.WriteLine(aiResponse.Content); // The sky appears blue primarily due to a phenomenon known as Rayleigh scattering...
-```
-
-You can also instead **use a local model running through Ollama** if you prefer!
-
-```
-using TimHanwich.AgentFramework;
-
-Agent myAgent = new Agent();
-myAgent.Model = new OllamaModel("llama3.2:3b");
-myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
-myAgent.Messages.Add(new Message(Role.user, "Why is the sky blue?"));
-Message aiResponse = await myAgent.PromptAsync();
-Console.WriteLine(aiResponse.Content); // The sky appears blue to our eyes due to a phenomenon called scattering...
-```
-
-### Multi-Turn Conversation
-The short snippet below demonstrates how a **multi-turn conversation** can be accomplished:
+It is very easy to build AI agents using a **FoundryResource** (from the [TimHanewich.Foundry](https://github.com/TimHanewich/TimHanewich.Foundry) SDK). For example:
 
 ```
 using TimHanewich.AgentFramework;
+using TimHanewich.Foundry;
 
-Agent myAgent = new Agent();
-myAgent.Model = new OllamaModel(){ModelIdentifier = "llama3.2:3b"};
-myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
+FoundryResource fr = new FoundryResource("<endpoint>");
+fr.ApiKey = "<key>";
+
+Agent myAgent = new Agent("You are a helpful assistant.");
+myAgent.FoundryResource = fr;
+myAgent.Model = "gpt-4o-mini";
+string response = await myAgent.PromptAsync("Why is the sky blue?");
+Console.WriteLine(response); // The sky appears blue primarily due to a phenomenon known as Rayleigh scattering...
+```
+
+### Multi-Turn Conversation
+The short snippet below demonstrates how a **multi-turn conversation** can be accomplished. The agent automatically maintains conversation history via the Responses API's `PreviousResponseID`:
+
+```
+using TimHanewich.AgentFramework;
+using TimHanewich.Foundry;
+
+FoundryResource fr = new FoundryResource("<endpoint>");
+fr.ApiKey = "<key>";
+
+Agent myAgent = new Agent("You are a helpful assistant.");
+myAgent.FoundryResource = fr;
+myAgent.Model = "gpt-4o-mini";
 while (true)
 {
     //Collect input
     Console.Write("> ");
     string? input = null;
     while (input == null){input = Console.ReadLine();}
-    myAgent.Messages.Add(new Message(Role.user, input));
 
     //Prompt
-    Message aiResponse = await myAgent.PromptAsync();
-    myAgent.Messages.Add(aiResponse); //Append model's response to message history
-    Console.WriteLine("\n" + aiResponse.Content);
+    string response = await myAgent.PromptAsync(input);
+    Console.WriteLine("\n" + response);
 }
 ```
 
 ### Tool Calling
-This library also supports tool calling (function calling)! As long as the model you are using supports it, you can use tool calling in the following way:
+This library supports tool calling through **executable functions** — tools that automatically execute when called by the model. You define a tool by extending the `ExecutableFunction` abstract class:
 
-Tool calling with Ollama (model `qwen2.5:7b`):
 ```
-//Set up model
-Agent myAgent = new Agent();
-myAgent.Model = new OllamaModel(){ModelIdentifier = "qwen2.5:7b"}; //qwen2.5 supports tool calling
-myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
+using TimHanewich.AgentFramework;
+using TimHanewich.Foundry;
 
-//Add tool
-Tool CheckTemperature = new Tool("check_temperature", "Check the temperature for a given city.");
-CheckTemperature.Parameters.Add(new ToolInputParameter("location", "The location to check the weather for, i.e. 'Atlanta, GA' or 'Seattle, WA'."));
-myAgent.Tools.Add(CheckTemperature);
+FoundryResource fr = new FoundryResource("<endpoint>");
+fr.ApiKey = "<key>";
 
-//Simulate asking question
-myAgent.Messages.Add(new Message(Role.user, "What is the temperature in Virginia Beach, VA?"));
+Agent myAgent = new Agent("You are a helpful assistant.");
+myAgent.FoundryResource = fr;
+myAgent.Model = "gpt-4o-mini";
 
-//Prompt
-Message aiResponse = await myAgent.PromptAsync();
-myAgent.Messages.Add(aiResponse); //Add model's response to history of messages
-foreach (ToolCall tc in aiResponse.ToolCalls)
+//Add tool (RandomUserGenerator is a built-in ExecutableFunction example)
+myAgent.Tools.Add(new RandomUserGenerator());
+
+//Prompt - the agent will automatically call the tool and return a final response
+string response = await myAgent.PromptAsync("Generate a random user for me.");
+Console.WriteLine(response);
+```
+
+The `ExecutableFunction` class is abstract — you create your own tools by inheriting from it and implementing `ExecuteAsync`:
+
+```
+public class RandomUserGenerator : ExecutableFunction
 {
-    Console.WriteLine("Tool '" + tc.ToolName + "' was called with parameters " + tc.Arguments.ToString(Formatting.None));
+    public RandomUserGenerator()
+    {
+        Name = "generate_random_user";
+        Description = "Generate random user information.";
+    }
+
+    public override async Task<string> ExecuteAsync(JObject? arguments)
+    {
+        HttpClient hc = new HttpClient();
+        HttpResponseMessage resp = await hc.GetAsync("https://randomuser.me/api/");
+        return await resp.Content.ReadAsStringAsync();
+    }
 }
-// Tool 'check_temperature' was called with parameters {"location":"Virginia Beach, VA"}
-
-//In the code, handle that tool call (i.e. call to weather API)
-//And then give that to the model to now use in its response to the user
-float temperature = 45.4f; //we'll pretent this is the temperature in Virgina Beach, VA
-myAgent.Messages.Add(new Message(Role.tool, "Temperature in Virginia Beach, VA: " + temperature.ToString() + " degrees F."));
-
-//Now again ask the model to respond (now that it has the data it called for)
-Message FinalMsg = await myAgent.PromptAsync();
-Console.WriteLine(FinalMsg.Content);
 ```
 
-Tool calling with Azure OpenAI (`GPT-4o-mini` used in this example):
+Tool calls are executed automatically in a loop — the agent will keep calling tools and feeding results back to the model until the model produces a final text response. You can subscribe to the `ExecutableFunctionInvoked` event to monitor tool calls as they happen:
+
 ```
-//Set up model
-Agent myAgent = new Agent();
-myAgent.Model = new AzureOpenAICredentials(){URL = "<endpoint>", ApiKey = "<key>"};
-myAgent.Messages.Add(new Message(Role.system, "You are a helpful assistant."));
-
-//Add tool
-Tool CheckTemperature = new Tool("check_temperature", "Check the temperature for a given city.");
-CheckTemperature.Parameters.Add(new ToolInputParameter("location", "The location to check the weather for, i.e. 'Atlanta, GA' or 'Seattle, WA'."));
-myAgent.Tools.Add(CheckTemperature);
-
-//Simulate asking question
-myAgent.Messages.Add(new Message(Role.user, "What is the temperature in Virginia Beach, VA?"));
-
-//Prompt
-Message aiResponse = await myAgent.PromptAsync();
-myAgent.Messages.Add(aiResponse); //Add model's response to history of messages
-foreach (ToolCall tc in aiResponse.ToolCalls)
+myAgent.ExecutableFunctionInvoked += (ExecutableFunction ef, JObject arguments) =>
 {
-    Console.WriteLine("Tool '" + tc.ToolName + "' was called with parameters " + tc.Arguments.ToString(Formatting.None));
-}
-// Tool 'check_temperature' was called with parameters {"location":"Virginia Beach, VA"}
-
-//In the code, handle that tool call (i.e. call to weather API)
-//And then give that to the model to now use in its response to the user
-float temperature = 45.4f; //we'll pretent this is the temperature in Virgina Beach, VA
-Message ToolResponse = new Message();
-ToolResponse.Role = Role.tool;
-ToolResponse.Content = "Temperature in Virginia Beach, VA: " + temperature.ToString() + " degrees F.";
-ToolResponse.ToolCallID = aiResponse.ToolCalls[0].ID; //OpenAI expects the tool call that provides the data to point exactly to what tool call the data corresponds to (what call it is fulfilling)
-myAgent.Messages.Add(ToolResponse);
-
-//Now again ask the model to respond (now that it has the data it called for)
-Message FinalMsg = await myAgent.PromptAsync();
-Console.WriteLine(FinalMsg.Content);
+    Console.WriteLine(ef.Name + " invoked: " + arguments.ToString(Formatting.None));
+};
 ```
-Note that in the Azure OpenAI example above, the only difference is that Azure OpenAI (the OpenAI API service) expects for the tool call response to directly call out what tool call it is responding to my specifying the **ID of the tool call**. This is not something that the Ollama API does (the Ollama API does not even have unique ID's for each tool call).
+
+### Multi-Agent (Agent as Tool)
+You can use one agent as a tool for another agent with `AgentAsTool`. This enables **multi-agent orchestration** where a parent agent delegates tasks to sub-agents:
+
+```
+using TimHanewich.AgentFramework;
+using TimHanewich.Foundry;
+
+FoundryResource fr = new FoundryResource("<endpoint>");
+fr.ApiKey = "<key>";
+
+//Set up a sub-agent
+Agent AIDA = new Agent("You are AIDA, a smart AI.");
+AIDA.FoundryResource = fr;
+AIDA.Model = "gpt-4o-mini";
+
+//Set up a concierge agent that delegates to AIDA
+Agent concierge = new Agent("You are a concierge. Delegate tasks to AIDA.");
+concierge.FoundryResource = fr;
+concierge.Model = "gpt-4o-mini";
+concierge.Tools.Add(new AgentAsTool(AIDA, "AIDA", "General purpose AI agent."));
+
+string response = await concierge.PromptAsync("Write me a haiku about the ocean.");
+Console.WriteLine(response);
+```
+
+### Token Tracking
+Each agent tracks its own token consumption. You can also get **recursive** token counts that include all sub-agents:
+
+```
+Console.WriteLine("Input tokens: " + myAgent.InputTokensConsumed);
+Console.WriteLine("Output tokens: " + myAgent.OutputTokensConsumed);
+
+//Recursive (includes sub-agent tokens)
+Console.WriteLine("Total input tokens: " + myAgent.InputTokensConsumedRecursive);
+Console.WriteLine("Total output tokens: " + myAgent.OutputTokensConsumedRecursive);
+```
+
+### Additional Settings
+The `Agent` class exposes several optional settings:
+
+```
+myAgent.ReasoningEffortLevel = ReasoningEffortLevel.High;  //Control reasoning effort
+myAgent.VerbosityLevel = Verbosity.Detailed;               //Control response verbosity
+myAgent.WebSearchEnabled = true;                           //Enable built-in web search tool
+```
