@@ -15,9 +15,8 @@ namespace AgentFrameworkTesting
 
         public static async Task TestAsync()
         {
-            string task = "Write me a 8-chapter book about baking bread.";
-
-            FoundryResource fr = Credentials.GetFoundryResource();
+            FoundryResource fr = new FoundryResource("");
+            fr.ApiKey = "";
 
             Agent AIDA = new Agent("You are AIDA, a smart AI");
             AIDA.FoundryResource = fr;
