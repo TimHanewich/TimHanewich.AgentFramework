@@ -21,7 +21,7 @@ fr.ApiKey = "<key>";
 
 Agent myAgent = new Agent("You are a helpful assistant.");
 myAgent.FoundryResource = fr;
-myAgent.Model = "gpt-4o-mini";
+myAgent.Model = "gpt-5.4-mini";
 string response = await myAgent.PromptAsync("Why is the sky blue?");
 Console.WriteLine(response); // The sky appears blue primarily due to a phenomenon known as Rayleigh scattering...
 ```
@@ -38,7 +38,7 @@ fr.ApiKey = "<key>";
 
 Agent myAgent = new Agent("You are a helpful assistant.");
 myAgent.FoundryResource = fr;
-myAgent.Model = "gpt-4o-mini";
+myAgent.Model = "gpt-5.4-mini";
 while (true)
 {
     //Collect input
@@ -64,7 +64,7 @@ fr.ApiKey = "<key>";
 
 Agent myAgent = new Agent("You are a helpful assistant.");
 myAgent.FoundryResource = fr;
-myAgent.Model = "gpt-4o-mini";
+myAgent.Model = "gpt-5.4-mini";
 
 //Add tool (RandomUserGenerator is a built-in ExecutableFunction example)
 myAgent.Tools.Add(new RandomUserGenerator());
@@ -116,12 +116,12 @@ fr.ApiKey = "<key>";
 //Set up a sub-agent
 Agent AIDA = new Agent("You are AIDA, a smart AI.");
 AIDA.FoundryResource = fr;
-AIDA.Model = "gpt-4o-mini";
+AIDA.Model = "gpt-5.4-mini";
 
 //Set up a concierge agent that delegates to AIDA
 Agent concierge = new Agent("You are a concierge. Delegate tasks to AIDA.");
 concierge.FoundryResource = fr;
-concierge.Model = "gpt-4o-mini";
+concierge.Model = "gpt-5.4-mini";
 concierge.Tools.Add(new AgentAsTool(AIDA, "AIDA", "General purpose AI agent."));
 
 string response = await concierge.PromptAsync("Write me a haiku about the ocean.");
