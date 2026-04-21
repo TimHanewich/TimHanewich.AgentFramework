@@ -9,7 +9,7 @@
     <Version>0.3.0</Version>
     <Authors>Tim Hanewich</Authors>
     <Product>TimHanewich.AgentFramework</Product>
-    <Description>Framework for developing agents through faciliting LLM inference.</Description>
+    <Description>Abstract layer for developing agents using the OpenAI Resopnses API via TimHanewich.Foundry SDK.</Description>
     <Copyright>Tim Hanewich</Copyright>
     <PackageProjectUrl>https://github.com/TimHanewich/TimHanewich.AgentFramework</PackageProjectUrl>
     <PackageIcon>icon.png</PackageIcon>
