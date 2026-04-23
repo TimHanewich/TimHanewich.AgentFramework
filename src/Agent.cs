@@ -26,8 +26,8 @@ namespace TimHanewich.AgentFramework
         public bool WebSearchEnabled {get; set;}
         
         //Events
-        public event ExecutableFunctionHandler? ExecutableFunctionInvoked;      //It evoked a function
-        public event ExecutableFunctionHandler? ExecutableFunctionReturned;     //An executable function that was invoked (called) returned
+        public event ExecutableFunctionHandler? ExecutableFunctionInvoked;     //It evoked a function
+        public event ExecutableFunctionHandler? ExecutableFunctionReturned;    //An executable function that was invoked (called) returned
         public event Action? InferenceRequested;                               //It is calling to the OpenAI Responses API now for inference
         public event TokenUsageHandler? InferenceReceived;                     //It has receved the resonse from OpenAI API
 
