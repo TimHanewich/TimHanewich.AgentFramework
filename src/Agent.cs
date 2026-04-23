@@ -29,6 +29,7 @@ namespace TimHanewich.AgentFramework
         public event ExecutableFunctionAction? ExecutableFunctionInvoked;      //It evoked a function
         public event ExecutableFunctionAction? ExecutableFunctionReturned;     //An executable function that was invoked (called) returned
         public event Action? InferenceRequested;                               //It is calling to the OpenAI Responses API now for inference
+        public event TokenUsageHandler? InferenceReceived;                     //It has receved the resonse from OpenAI API
 
         public Agent()
         {
@@ -105,6 +106,7 @@ namespace TimHanewich.AgentFramework
                 //Call!
                 InferenceRequested?.Invoke(); //raise event that we are now requesting inference
                 Response resp = await FoundryResource.CreateResponseAsync(rr);
+                InferenceReceived?.Invoke(resp.InputTokensConsumed, resp.OutputTokensConsumed); //raise event that inference now received
                 _InputTokensConsumed = _InputTokensConsumed + resp.InputTokensConsumed;
                 _OutputTokensConsumed = _OutputTokensConsumed + resp.OutputTokensConsumed;
 
