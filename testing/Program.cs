@@ -27,6 +27,8 @@ namespace AgentFrameworkTesting
             concierge.Model = "gpt-5.4-mini"; 
             concierge.Tools.Add(new AgentAsTool(AIDA, "AIDA", "AIDA agent, general purpose good-at-everything agent but with outputs that must be verified for quality."));
             concierge.ExecutableFunctionInvoked += FunctionInvoked;
+            concierge.InferenceRequested += InfReq;
+            concierge.InferenceReceived += InfRec;
 
             while (true)
             {
@@ -63,6 +65,21 @@ namespace AgentFrameworkTesting
         public static void FunctionInvoked(ExecutableFunction ef, JObject arguments)
         {
             Console.Write(ef.Name + " invoked: " + arguments.ToString(Newtonsoft.Json.Formatting.None) + " ");
+        }
+
+        public static void FunctionReceived(ExecutableFunction ef, JObject arguments)
+        {
+            Console.WriteLine("Complete: " + ef.Name);
+        }
+        
+        public static void InfReq()
+        {
+            Console.WriteLine("InfReq!");
+        }
+
+        public static void InfRec(int i, int o)
+        {
+            Console.WriteLine("InfRec: " + i.ToString() + ", " + o.ToString());
         }
     }
 }
