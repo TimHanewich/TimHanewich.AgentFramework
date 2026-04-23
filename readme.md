@@ -66,40 +66,63 @@ Agent myAgent = new Agent("You are a helpful assistant.");
 myAgent.FoundryResource = fr;
 myAgent.Model = "gpt-5.4-mini";
 
-//Add tool (RandomUserGenerator is a built-in ExecutableFunction example)
-myAgent.Tools.Add(new RandomUserGenerator());
+//Add a custom tool
+myAgent.Tools.Add(new WeatherLookup());
 
 //Prompt - the agent will automatically call the tool and return a final response
-string response = await myAgent.PromptAsync("Generate a random user for me.");
+string response = await myAgent.PromptAsync("What's the weather in New York?");
 Console.WriteLine(response);
 ```
 
 The `ExecutableFunction` class is abstract — you create your own tools by inheriting from it and implementing `ExecuteAsync`:
 
 ```
-public class RandomUserGenerator : ExecutableFunction
+public class WeatherLookup : ExecutableFunction
 {
-    public RandomUserGenerator()
+    public WeatherLookup()
     {
-        Name = "generate_random_user";
-        Description = "Generate random user information.";
+        Name = "get_weather";
+        Description = "Get the current weather for a location.";
     }
 
     public override async Task<string> ExecuteAsync(JObject? arguments)
     {
+        string location = arguments["location"].ToString();
         HttpClient hc = new HttpClient();
-        HttpResponseMessage resp = await hc.GetAsync("https://randomuser.me/api/");
+        HttpResponseMessage resp = await hc.GetAsync("https://wttr.in/" + location + "?format=j1");
         return await resp.Content.ReadAsStringAsync();
     }
 }
 ```
 
-Tool calls are executed automatically in a loop — the agent will keep calling tools and feeding results back to the model until the model produces a final text response. You can subscribe to the `ExecutableFunctionInvoked` event to monitor tool calls as they happen:
+Tool calls are executed automatically in a loop — the agent will keep calling tools and feeding results back to the model until the model produces a final text response. You can subscribe to events to monitor tool calls as they happen:
 
 ```
+//Called when the agent invokes a tool
 myAgent.ExecutableFunctionInvoked += (ExecutableFunction ef, JObject arguments) =>
 {
-    Console.WriteLine(ef.Name + " invoked: " + arguments.ToString(Formatting.None));
+    Console.WriteLine(ef.Name + " invoked with: " + arguments.ToString(Formatting.None));
+};
+
+//Called when a tool finishes executing and returns
+myAgent.ExecutableFunctionReturned += (ExecutableFunction ef, JObject arguments) =>
+{
+    Console.WriteLine(ef.Name + " returned.");
+};
+```
+
+### Inference Lifecycle Events
+You can monitor each call to the OpenAI Responses API using the `InferenceRequested` and `InferenceReceived` events. This is useful for logging, progress indicators, or tracking per-call token usage:
+
+```
+myAgent.InferenceRequested += () =>
+{
+    Console.WriteLine("Calling OpenAI API...");
+};
+
+myAgent.InferenceReceived += (int inputTokens, int outputTokens) =>
+{
+    Console.WriteLine("Response received! Tokens used: " + inputTokens + " in, " + outputTokens + " out.");
 };
 ```
 
