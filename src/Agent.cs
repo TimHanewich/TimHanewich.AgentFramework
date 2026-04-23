@@ -26,7 +26,9 @@ namespace TimHanewich.AgentFramework
         public bool WebSearchEnabled {get; set;}
         
         //Events
-        public event ExecutableFunctionInvoked? ExecutableFunctionInvoked;
+        public event ExecutableFunctionAction? ExecutableFunctionInvoked;      //It evoked a function
+        public event ExecutableFunctionAction? ExecutableFunctionReturned;     //An executable function that was invoked (called) returned
+        public event Action? InferenceRequested;                               //It is calling to the OpenAI Responses API now for inference
 
         public Agent()
         {
@@ -101,6 +103,7 @@ namespace TimHanewich.AgentFramework
                 rr.PreviousResponseID = PreviousResponseID;
 
                 //Call!
+                InferenceRequested?.Invoke(); //raise event that we are now requesting inference
                 Response resp = await FoundryResource.CreateResponseAsync(rr);
                 _InputTokensConsumed = _InputTokensConsumed + resp.InputTokensConsumed;
                 _OutputTokensConsumed = _OutputTokensConsumed + resp.OutputTokensConsumed;
@@ -129,6 +132,7 @@ namespace TimHanewich.AgentFramework
                                 //Execute
                                 ExecutableFunctionInvoked?.Invoke(ef, fc.Arguments);                      //if there are any subscribers (question mark), raise
                                 string ToolExecutionResponse = await ef.ExecuteAsync(fc.Arguments);
+                                ExecutableFunctionReturned?.Invoke(ef, fc.Arguments);                     //Raise event to let know it returned
 
                                 //Add it back
                                 rr.Inputs.Add(new FunctionCallOutput(fc.CallId, ToolExecutionResponse));
