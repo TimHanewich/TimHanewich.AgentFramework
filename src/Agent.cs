@@ -12,7 +12,6 @@ namespace TimHanewich.AgentFramework
         private int _InputTokensConsumed;
         private int _OutputTokensConsumed;
         
-
         //public vars
         public FoundryResource? FoundryResource {get; set;}
         public string? Model {get; set;}
