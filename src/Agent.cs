@@ -25,6 +25,8 @@ namespace TimHanewich.AgentFramework
         public bool WebSearchEnabled {get; set;}
         
         //Events
+        public event WebSearchHandler? WebSearchInvoked;                       //It performed a web search (built in)
+        public event Action? WebSearchPageOpened;                              //It opened a web page
         public event ExecutableFunctionHandler? ExecutableFunctionInvoked;     //It evoked a function
         public event ExecutableFunctionHandler? ExecutableFunctionReturned;    //An executable function that was invoked (called) returned
         public event Action? InferenceRequested;                               //It is calling to the OpenAI Responses API now for inference
@@ -139,6 +141,14 @@ namespace TimHanewich.AgentFramework
                                 rr.Inputs.Add(new FunctionCallOutput(fc.CallId, ToolExecutionResponse));
                             }
                         }
+                    }
+                    else if (ex is WebSearchCallQuery wscq)
+                    {
+                        WebSearchInvoked?.Invoke(wscq.Query);
+                    }
+                    else if (ex is WebSearchCallOpenPage wscop)
+                    {
+                        WebSearchPageOpened?.Invoke();
                     }
                 }
 
