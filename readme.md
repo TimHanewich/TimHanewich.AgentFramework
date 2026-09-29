@@ -163,6 +163,21 @@ Console.WriteLine("Total input tokens: " + myAgent.InputTokensConsumedRecursive)
 Console.WriteLine("Total output tokens: " + myAgent.OutputTokensConsumedRecursive);
 ```
 
+### Passing Images
+`PromptAsync` accepts one or more local image file paths (as a `params string[]`), allowing you to send images along with your prompt for vision-capable models to analyze:
+
+```
+string response = await myAgent.PromptAsync("What is this?", @"C:\Users\timh\Downloads\photo.png");
+Console.WriteLine(response);
+```
+
+You can also pass multiple images in a single prompt:
+
+```
+string response = await myAgent.PromptAsync("Compare these two images.", @"C:\Users\timh\Downloads\photo1.png", @"C:\Users\timh\Downloads\photo2.png");
+Console.WriteLine(response);
+```
+
 ### Additional Settings
 The `Agent` class exposes several optional settings:
 
