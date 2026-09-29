@@ -43,7 +43,7 @@ namespace TimHanewich.AgentFramework
             Tools = new List<ExecutableFunction>();
         }
 
-        public async Task<string> PromptAsync(string prompt)
+        public async Task<string> PromptAsync(string prompt, params string[] image_paths)
         {
             //Check
             if (FoundryResource == null)
@@ -75,8 +75,23 @@ namespace TimHanewich.AgentFramework
                 SystemPrompt = null;
             }
 
-            //Set up first input: user prompt
-            rr.Inputs.Add(new Message(Role.user, prompt));
+            //Set up user message
+            Message UserMsg = new Message();
+            UserMsg.Role = Role.user;
+            rr.Inputs.Add(UserMsg); //preemptively add it
+
+            //Set up user message text input (prompt)
+            UserMsg.Text = prompt;
+
+            //Set up image input (if any)
+            foreach (string image_path in image_paths)
+            {
+                if (File.Exists(image_path) == false)
+                {
+                    throw new Exception("Image at path '" + image_path + "' does not exist!");
+                }
+                UserMsg.Images.Add(InputImage.FromFile(image_path));
+            }
 
             //Set up tools (functions)
             foreach (ExecutableFunction ef in Tools)
