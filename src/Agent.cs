@@ -25,6 +25,7 @@ namespace TimHanewich.AgentFramework
         public bool WebSearchEnabled {get; set;}
         
         //Events
+        public event TextResponse? TextResponseReceived;                       //The LLM responded with some text
         public event WebSearchHandler? WebSearchInvoked;                       //It performed a web search (built in)
         public event Action? WebSearchPageOpened;                              //It opened a web page
         public event ExecutableFunctionHandler? ExecutableFunctionInvoked;     //It evoked a function
@@ -43,7 +44,7 @@ namespace TimHanewich.AgentFramework
             Tools = new List<ExecutableFunction>();
         }
 
-        public async Task<string> PromptAsync(string prompt, params string[] image_paths)
+        public async Task PromptAsync(string prompt, params string[] image_paths)
         {
             //Check
             if (FoundryResource == null)
@@ -112,8 +113,7 @@ namespace TimHanewich.AgentFramework
                 rr.Tools.Add(new WebSearchTool());
             }
 
-            //Collect!
-            List<string> CollectedResponseToReturn = new List<string>();
+            //Run agent loop until completed!
             while (true)
             {
                 //Set previous response Id
@@ -138,7 +138,7 @@ namespace TimHanewich.AgentFramework
                     {
                         if (msg.Text != null)
                         {
-                            CollectedResponseToReturn.Add(msg.Text);
+                            TextResponseReceived?.Invoke(msg.Text);
                         }
                     }
                     else if (ex is FunctionCall fc)
@@ -166,24 +166,7 @@ namespace TimHanewich.AgentFramework
                         WebSearchPageOpened?.Invoke();
                     }
                 }
-
-                //If there was no function outputs to return... the model is done! Return the message
-                if (rr.Inputs.Count == 0)
-                {
-                    string ToReturn = "";
-                    foreach (string s in CollectedResponseToReturn)
-                    {
-                        ToReturn = ToReturn + s + "\n\n";
-                    }
-                    ToReturn = ToReturn.Substring(0, ToReturn.Length - 2);
-                    return ToReturn;
-                }
             }
-
-            
-
-        
-
         }
     
         //Recursive input tokens consumed (includes sub-agents)

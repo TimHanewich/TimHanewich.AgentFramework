@@ -8,4 +8,6 @@ namespace TimHanewich.AgentFramework
     public delegate void WebSearchHandler(string search);
 
     public delegate void TokenUsageHandler(int input_tokens, int output_tokens);
+
+    public delegate void TextResponse(string text);
 }
