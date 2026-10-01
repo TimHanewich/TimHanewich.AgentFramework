@@ -15,7 +15,7 @@ namespace AgentFrameworkTesting
 
         public static async Task TestAsync()
         {
-            FoundryResource fr = new FoundryResource("");
+            FoundryResource fr = new FoundryResource("https://____.services.ai.azure.com");
             fr.ApiKey = "";
 
             Agent MyAgent = new Agent("You are smart.");
@@ -24,11 +24,10 @@ namespace AgentFrameworkTesting
             MyAgent.WebSearchInvoked += WebSearch;
             MyAgent.WebSearchPageOpened += PageOpened;
             MyAgent.WebSearchEnabled = true;
+            MyAgent.TextResponseReceived += TextResponseReceived;
 
             Console.WriteLine("Prompting...");
-            string response = await MyAgent.PromptAsync("Tell me about Tim Hanewich's Scout project. Read one of his articles and summarize it for me.");
-            Console.WriteLine(response);
-            
+            await MyAgent.PromptAsync("Tell me about Tim Hanewich's Scout project. Read one of his articles and summarize it for me.");            
         }
 
         public static void FunctionInvoked(ExecutableFunction ef, JObject arguments)
@@ -59,6 +58,12 @@ namespace AgentFrameworkTesting
         public static void PageOpened()
         {
             Console.WriteLine("Page opened.");
+        }
+
+
+        public static void TextResponseReceived(string txt)
+        {
+            Console.WriteLine("Text Response From Model: <" + txt + ">");
         }
     }
 }
