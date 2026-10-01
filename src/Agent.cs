@@ -166,6 +166,9 @@ namespace TimHanewich.AgentFramework
                         WebSearchPageOpened?.Invoke();
                     }
                 }
+
+                //If there were no further FunctionCallOutputs to provide back to the model (it is done!), finish!
+                break;
             }
         }
     
