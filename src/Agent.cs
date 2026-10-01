@@ -168,7 +168,10 @@ namespace TimHanewich.AgentFramework
                 }
 
                 //If there were no further FunctionCallOutputs to provide back to the model (it is done!), finish!
-                break;
+                if (rr.Inputs.Count == 0)
+                {
+                    break;
+                }
             }
         }
     
