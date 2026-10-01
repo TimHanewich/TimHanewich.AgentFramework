@@ -11,3 +11,4 @@
 |1.2.0|`b5459b2e9e60677aad9028c0dce247952afad88f`|Added web search lifecycle events: `WebSearchInvoked` (fires when the agent performs a web search, provides the query string via new `WebSearchHandler` delegate) and `WebSearchPageOpened` (fires when the agent opens a web page during search).|
 |1.3.0|`1386f848ae59467ef8768d6f7cc64b1e728f2419`|Added ability to pass images into prompt|
 |2.0.0|`42827cf941ffb6cee92594cbd74c85d589482a71`|Text output from the model is raised as an event, not returned all at once.|
+|2.0.1|`94d5c860de48abd66e9c2bc1752fab0070b493db`|Fixed loop issue with it quitting early|
