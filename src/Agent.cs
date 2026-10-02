@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 using TimHanewich.Foundry;
 using TimHanewich.Foundry.OpenAI.Responses;
 
@@ -23,6 +24,7 @@ namespace TimHanewich.AgentFramework
         public ReasoningEffortLevel? ReasoningEffortLevel {get; set;}
         public Verbosity? VerbosityLevel {get; set;}
         public bool WebSearchEnabled {get; set;}
+        public TimeSpan RateLimitExceededCooloff {get; set;}                   //What the delay will be after before trying again after rate limits were exceeded
         
         //Events
         public event TextResponse? TextResponseReceived;                       //The LLM responded with some text
@@ -32,10 +34,13 @@ namespace TimHanewich.AgentFramework
         public event ExecutableFunctionHandler? ExecutableFunctionReturned;    //An executable function that was invoked (called) returned
         public event Action? InferenceRequested;                               //It is calling to the OpenAI Responses API now for inference
         public event TokenUsageHandler? InferenceReceived;                     //It has receved the resonse from OpenAI API
+        public event Action? RateLimitExceeded;                                //Rate limit has been exceeded, so now going to wait
+        public event TimeSpanHandler? RateLimitCoolingOff;                     //To relay that it is cooling off due to rate limit and for how long
 
         public Agent()
         {
             Tools = new List<ExecutableFunction>();
+            RateLimitExceededCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
         }
 
         public Agent(string system_prompt)
@@ -120,8 +125,26 @@ namespace TimHanewich.AgentFramework
                 rr.PreviousResponseID = PreviousResponseID;
 
                 //Call!
-                InferenceRequested?.Invoke(); //raise event that we are now requesting inference
-                Response resp = await FoundryResource.CreateResponseAsync(rr);
+                Response? resp = null;
+                while (resp == null)
+                {
+                    InferenceRequested?.Invoke(); //raise event that we are now requesting inference
+                    try
+                    {
+                        resp = await FoundryResource.CreateResponseAsync(rr);
+                    }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message.Contains("rate_limit_exceeded")) // https://i.imgur.com/uvI5Jei.png
+                        {
+                            RateLimitExceeded?.Invoke(); //raise that we got rate limited
+                            RateLimitCoolingOff?.Invoke(RateLimitExceededCooloff); //raise that we will wait this amount of time before proceeding
+                            await Task.Delay(RateLimitExceededCooloff); //wait
+                        }
+                    }
+                }
+
+                //Make note of things immediately after call
                 InferenceReceived?.Invoke(resp.InputTokensConsumed, resp.OutputTokensConsumed); //raise event that inference now received
                 _InputTokensConsumed = _InputTokensConsumed + resp.InputTokensConsumed;
                 _OutputTokensConsumed = _OutputTokensConsumed + resp.OutputTokensConsumed;

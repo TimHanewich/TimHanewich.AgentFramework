@@ -10,4 +10,6 @@ namespace TimHanewich.AgentFramework
     public delegate void TokenUsageHandler(int input_tokens, int output_tokens);
 
     public delegate void TextResponse(string text);
+
+    public delegate void TimeSpanHandler(TimeSpan duration);
 }
