@@ -24,7 +24,7 @@ namespace TimHanewich.AgentFramework
         public ReasoningEffortLevel? ReasoningEffortLevel {get; set;}
         public Verbosity? VerbosityLevel {get; set;}
         public bool WebSearchEnabled {get; set;}
-        public TimeSpan RateLimitExceededCooloff {get; set;}                   //What the delay will be after before trying again after rate limits were exceeded
+        public TimeSpan RateLimitCooloff {get; set;}                   //What the delay will be after before trying again after rate limits were exceeded
         
         //Events
         public event TextResponse? TextResponseReceived;                       //The LLM responded with some text
@@ -40,14 +40,14 @@ namespace TimHanewich.AgentFramework
         public Agent()
         {
             Tools = new List<ExecutableFunction>();
-            RateLimitExceededCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
+            RateLimitCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
         }
 
         public Agent(string system_prompt)
         {
             SystemPrompt = system_prompt;
             Tools = new List<ExecutableFunction>();
-            RateLimitExceededCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
+            RateLimitCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
         }
 
         public async Task PromptAsync(string prompt, params string[] image_paths)
@@ -139,8 +139,8 @@ namespace TimHanewich.AgentFramework
                         if (ex.Message.Contains("rate_limit_exceeded")) // https://i.imgur.com/uvI5Jei.png
                         {
                             RateLimitExceeded?.Invoke(); //raise that we got rate limited
-                            RateLimitCoolingOff?.Invoke(RateLimitExceededCooloff); //raise that we will wait this amount of time before proceeding
-                            await Task.Delay(RateLimitExceededCooloff); //wait
+                            RateLimitCoolingOff?.Invoke(RateLimitCooloff); //raise that we will wait this amount of time before proceeding
+                            await Task.Delay(RateLimitCooloff); //wait
                         }
                     }
                 }
