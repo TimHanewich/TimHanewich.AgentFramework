@@ -47,6 +47,7 @@ namespace TimHanewich.AgentFramework
         {
             SystemPrompt = system_prompt;
             Tools = new List<ExecutableFunction>();
+            RateLimitExceededCooloff = TimeSpan.FromSeconds(60); //1 minute is the default
         }
 
         public async Task PromptAsync(string prompt, params string[] image_paths)
