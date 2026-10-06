@@ -142,6 +142,10 @@ namespace TimHanewich.AgentFramework
                             RateLimitCoolingOff?.Invoke(RateLimitCooloff); //raise that we will wait this amount of time before proceeding
                             await Task.Delay(RateLimitCooloff); //wait
                         }
+                        else //unhandled error
+                        {
+                            throw;
+                        }
                     }
                 }
 
